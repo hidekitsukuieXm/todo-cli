@@ -1,0 +1,44 @@
+{
+  "name": "todo-cli",
+  "version": "1.0.0",
+  "description": "A simple TODO CLI application",
+  "main": "dist/index.js",
+  "bin": {
+    "todo": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "serve": "node dist/server.js",
+    "dev:server": "ts-node src/server.ts",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "todo",
+    "cli",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.55.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  }
+}

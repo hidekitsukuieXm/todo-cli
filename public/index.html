@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TODO App</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .add-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .add-form input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-form input:focus {
+      border-color: #007bff;
+    }
+    .add-form button {
+      padding: 12px 24px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .add-form button:hover {
+      background: #0056b3;
+    }
+    .todo-list {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    .todo-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s;
+    }
+    .todo-item:last-child {
+      border-bottom: none;
+    }
+    .todo-item:hover {
+      background: #f9f9f9;
+    }
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: #999;
+    }
+    .todo-checkbox {
+      width: 24px;
+      height: 24px;
+      margin-right: 16px;
+      cursor: pointer;
+      accent-color: #007bff;
+    }
+    .todo-text {
+      flex: 1;
+      font-size: 16px;
+      color: #333;
+    }
+    .todo-delete {
+      padding: 8px 12px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .todo-item:hover .todo-delete {
+      opacity: 1;
+    }
+    .todo-delete:hover {
+      background: #c82333;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 16px;
+      padding: 0 4px;
+    }
+    .todo-count {
+      color: #666;
+      font-size: 14px;
+    }
+    .clear-btn {
+      padding: 8px 16px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .clear-btn:hover {
+      background: #545b62;
+    }
+    .clear-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>TODO App</h1>
+    <form class="add-form" id="addForm">
+      <input type="text" id="todoInput" placeholder="Add a new todo..." required>
+      <button type="submit">Add</button>
+    </form>
+    <div class="todo-list" id="todoList"></div>
+    <div class="actions">
+      <span class="todo-count" id="todoCount"></span>
+      <button class="clear-btn" id="clearBtn">Clear Completed</button>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '/api/todos';
+    let todos = [];
+
+    async function fetchTodos() {
+      const res = await fetch(API_URL);
+      todos = await res.json();
+      render();
+    }
+
+    async function addTodo(text) {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      if (res.ok) {
+        await fetchTodos();
+      }
+    }
+
+    async function toggleTodo(id, completed) {
+      const endpoint = completed ? 'uncomplete' : 'complete';
+      const res = await fetch(`${API_URL}/${id}/${endpoint}`, { method: 'PATCH' });
+      if (res.ok) {
+        await fetchTodos();
+      }
+    }
+
+    async function deleteTodo(id) {
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchTodos();
+      }
+    }
+
+    async function clearCompleted() {
+      const res = await fetch(`${API_URL}/completed/clear`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchTodos();
+      }
+    }
+
+    function render() {
+      const list = document.getElementById('todoList');
+      const countEl = document.getElementById('todoCount');
+      const clearBtn = document.getElementById('clearBtn');
+
+      if (todos.length === 0) {
+        list.innerHTML = '<div class="empty-state">No todos yet. Add one above!</div>';
+      } else {
+        list.innerHTML = todos.map(todo => `
+          <div class="todo-item ${todo.completed ? 'completed' : ''}">
+            <input type="checkbox" class="todo-checkbox"
+              ${todo.completed ? 'checked' : ''}
+              onchange="toggleTodo(${todo.id}, ${todo.completed})">
+            <span class="todo-text">${escapeHtml(todo.text)}</span>
+            <button class="todo-delete" onclick="deleteTodo(${todo.id})">Delete</button>
+          </div>
+        `).join('');
+      }
+
+      const pending = todos.filter(t => !t.completed).length;
+      const completed = todos.filter(t => t.completed).length;
+      countEl.textContent = `${pending} pending, ${completed} completed`;
+      clearBtn.disabled = completed === 0;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    document.getElementById('addForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('todoInput');
+      const text = input.value.trim();
+      if (text) {
+        await addTodo(text);
+        input.value = '';
+      }
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', clearCompleted);
+
+    fetchTodos();
+  </script>
+</body>
+</html>
